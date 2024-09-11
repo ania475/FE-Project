@@ -1,0 +1,13 @@
+{% if facts_list %}
+    <ul>
+    {% for fact in facts_list %}
+        <li><a href="{% url 'facts:fact_detail' fact.fact_id %}">{{ fact.fact }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>You have no saved facts.</p>
+{% endif %}
+
+
+
+
