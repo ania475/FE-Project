@@ -1,7 +1,9 @@
 services:
     db:
-        image: postgres
-        restart: always
+        image: postgres:16-alpine
+        platform: linux/amd64  # Specify platform
+        ports:
+            - "5433:5432"
         environment:
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: password
@@ -9,6 +11,11 @@ services:
         volumes:
             - pgdata:/var/lib/postgresql/data
             - ./sql/create_tables.sql:/docker-entrypoint-initdb.d/create_tables.sql
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
     adminer:
         image: adminer
@@ -17,6 +24,34 @@ services:
             - 8080:8080
         depends_on:
             - db
+    django:
+        image: django
+        platform: linux/amd64  # Specify platform
+        build: 
+            context: ./backend
+            dockerfile: Dockerfile
+        volumes:
+            - ./backend:/facts_django
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=password
+            - POSTGRES_DB=postgres
+        ports:
+            - "8000:8000"
+        depends_on:
+            - db
+    frontend:
+        image: node:16-alpine
+        platform: linux/amd64  # Specify platform
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        ports:
+            - "3000:3000"
+        volumes:
+            - ./frontend:/app/frontend
+        depends_on:
+            - django
 
 volumes:
     pgdata:
